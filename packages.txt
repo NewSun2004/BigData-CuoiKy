@@ -1,0 +1,2 @@
+default-jre-headless
+default-jdk
