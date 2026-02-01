@@ -7,6 +7,7 @@ from pyspark.sql import SparkSession
 from pyspark.ml import PipelineModel
 from pyspark.sql import functions as F
 from pyspark.ml.linalg import Vectors, VectorUDT
+from pyspark.sql import Row
 
 st.set_page_config(page_title="MinIO + Spark ML Demo", layout="wide")
 st.title("Demo dự đoán giá vé máy bay bằng Spark ML (lưu trên MinIO)")
@@ -132,8 +133,9 @@ try:
             row = [float(x) * float(f) for x in base_feats]
             feat_rows.append(row)
 
-        pdf = pd.DataFrame({"features_list": feat_rows})
-        df = spark.createDataFrame(pdf)
+        # Build Spark DataFrame from Row objects to avoid pandas internals causing .iteritems errors
+        rows = [Row(features_list=fr) for fr in feat_rows]
+        df = spark.createDataFrame(rows)
 
         to_vec = F.udf(lambda xs: Vectors.dense(xs), VectorUDT())
         df = df.withColumn("features", to_vec(F.col("features_list")))
